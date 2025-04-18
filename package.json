@@ -1,0 +1,25 @@
+{
+  "name": "agent_backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.cjs",
+    "dev": "nodemon index.cjs",    
+    "debug": "nodemon --inspect-brk index.cjs",    
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {        
+    "@langchain/community": "^0.0.19",
+    "@langchain/core": "^0.3.44",
+    "@langchain/openai": "^0.5.5",
+    "@slack/bolt": "^4.2.1",
+    "dotenv": "^16.5.0",
+    "eventsource": "^3.0.6",
+    "langchain": "^0.3.22",
+    "node-fetch": "^3.3.2",
+    "nodemon": "^3.1.9"
+  }
+}
