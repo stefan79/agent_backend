@@ -39,7 +39,7 @@ ENV LOG_LEVEL=INFO
 # Expose the port the app runs on
 EXPOSE 3000
 
-LABEL org.opencontainers.image.source https://github.com/stefan79/tool_here
+LABEL org.opencontainers.image.source https://github.com/stefan79/agent_backend
 
 # Start the application
 CMD ["npm", "start"]
