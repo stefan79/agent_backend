@@ -33,7 +33,7 @@ import { Agent } from './agent';
   });
 
   // Initialize the agent
-  const agent = new Agent(model, tools);
+  const agent = new Agent(model, tools, 3);
 
   // Initialize Slack app
   const app = new App({
