@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { ChatOpenAI } from "@langchain/openai";
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import { App } from '@slack/bolt';
-import { runAgent } from './agent';
+import { Agent } from './agent';
 
 // Start the app
 (async () => {
@@ -24,9 +24,6 @@ import { runAgent } from './agent';
   const tools = await mcpClient.getTools();
   console.log(`Loaded ${tools.length} tools from MCP`);
 
-
-
-
   // Initialize the language model
   const model = new ChatOpenAI({
     modelName: "gpt-4",
@@ -35,7 +32,8 @@ import { runAgent } from './agent';
     // Removed unsupported response_format parameter
   });
 
-
+  // Initialize the agent
+  const agent = new Agent(model, tools);
 
   // Initialize Slack app
   const app = new App({
@@ -53,7 +51,7 @@ import { runAgent } from './agent';
 
       console.log("Processing message:", typedMessage.text);
       
-      const result = await runAgent(typedMessage.text, model, tools);
+      const result = await agent.run(typedMessage.text);
       
       console.log("Agent result:", result);
       
