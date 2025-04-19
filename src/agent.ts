@@ -1,9 +1,22 @@
 import { StructuredToolInterface } from "@langchain/core/tools";
-import { Step } from "./scratchpad";
+import { Step, ToolInput } from "./scratchpad";
 import { formatScratchpad } from "./scratchpad";
-import { generateToolGuidance } from "./tools";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { callTool, generateToolGuidance } from "./tools";
+import { HumanMessage, SystemMessage, AIMessageChunk} from "@langchain/core/messages";
 import { ChatOpenAI } from "@langchain/openai";
+
+interface ToolAgentResponse {
+    actionType: "tool";
+    tool: string;
+    toolInput: ToolInput;
+    reasoning: string;
+}
+
+interface FinalAnswerResponse {
+    actionType: "finalAnswer";
+    answer: string;
+    reasoning: string;
+}
 
 const generatePrompt = (userInput: string, tools: StructuredToolInterface[], steps: Step[]) => {
     const scratchpad = formatScratchpad(steps);
@@ -54,7 +67,24 @@ const generatePrompt = (userInput: string, tools: StructuredToolInterface[], ste
     ];
   };
 
-  
+const parseModelResponse = (response: AIMessageChunk): ToolAgentResponse | FinalAnswerResponse => {
+    try {
+      // Extract JSON from the response content
+      console.log("Raw model response:", response.text);
+      
+      // Parse the JSON
+      try {
+        const result = JSON.parse(response.text);
+        console.log("Parsed result:", result);
+        return result;
+      } catch (e) {
+        throw new Error("Could not extract JSON from response");
+      }
+    } catch (error) {
+      console.error("Error parsing JSON response:", error);
+      throw error;
+    }
+  }
   export class Agent {
     private model: ChatOpenAI;
     private tools: StructuredToolInterface[];
@@ -65,7 +95,6 @@ const generatePrompt = (userInput: string, tools: StructuredToolInterface[], ste
       this.tools = tools;
       this.maxIterations = maxIterations;
     }
-  
     async run(input: string): Promise<{ output: string; intermediateSteps: Step[] }> {
             const steps: Step[] = [];
             let iterations = 0;
@@ -81,42 +110,7 @@ const generatePrompt = (userInput: string, tools: StructuredToolInterface[], ste
               const response = await this.model.invoke(messages);
               
               // Parse the JSON response
-              let result;
-              try {
-                // Extract JSON from the response content
-                console.log("Raw model response:", response.text);
-                
-                // Parse the JSON
-                try {
-                  result = JSON.parse(response.text);
-                } catch (e) {
-                  throw new Error("Could not extract JSON from response");
-                }
-        
-                console.log("Parsed result:", result);
-              } catch (error) {
-                console.error("Error parsing JSON response:", error);
-                
-                // Add this as an observation and continue
-                steps.push({
-                  tool: "error",
-                  toolInput: { error: true },
-                  reasoning: `Error parsing response: ${response.content}`,
-                  observation: `Error parsing response: ${response.content}`,
-                });
-                
-                continue;
-              }
-              
-              // Normalize the result object
-              if (!result.actionType && result.tool) {
-                result.actionType = "tool";
-              } else if (!result.actionType && (result.answer || result.finalAnswer)) {
-                result.actionType = "finalAnswer";
-                if (result.finalAnswer && !result.answer) {
-                  result.answer = result.finalAnswer;
-                }
-              }
+              const result = parseModelResponse(response);
               
               // Check if this is a final answer
               if (result.actionType === "finalAnswer") {
@@ -126,71 +120,16 @@ const generatePrompt = (userInput: string, tools: StructuredToolInterface[], ste
                   intermediateSteps: steps 
                 };
               }
-              
               // Otherwise, it should be a tool action
-              if (result.actionType === "tool") {
+              else if (result.actionType === "tool") {
                 console.log(`Agent wants to use tool: ${result.tool}`);
-                
-                // Find the tool
-                const tool = this.tools.find(t => t.name === result.tool);
-                
-                if (!tool) {
-                  const errorMsg = `Tool ${result.tool} not found`;
-                  console.error(errorMsg);
-                  
-                  // Add this as an observation and continue
-                  steps.push({
-                    tool: result.tool,
-                    toolInput: result.toolInput,
-                    reasoning: result.reasoning,
-                    observation: errorMsg,
-                  });
-                  
-                  continue;
-                }
-                
-                // Execute the tool
-                try {
-                  console.log(`Executing tool ${result.tool} with input:`, result.toolInput);
-                  
-                  const toolResponse = await tool.invoke(result.toolInput);
-                  
-                  const observation = toolResponse.map(( item: { text: string }) => item.text).join(', ')
-        
-                  console.log("Tool result:", observation);
-                  
-                  // Add to steps
-                  steps.push({
-                    tool: result.tool,
-                    toolInput: result.toolInput,
-                    reasoning: result.reasoning,
-                    observation: observation,
-                  });
-                } catch (error: unknown) {
-                  console.error(`Error executing tool ${result.tool}:`, (error as Error)?.message);
-                  
-                  // Add error as observation
-                  steps.push({
-                    tool: result.tool,
-                    toolInput: result.toolInput,
-                    reasoning: result.reasoning,
-                    observation: `Error: ${(error as Error)?.message}`,
-                  });
-                }
-              } else {
-                console.error("Unknown action type:", result.actionType);
-                
-                // Add as observation and continue
-                steps.push({
-                  observation: `Error: Unknown action type ${result.actionType}`,
-                  tool: '',
-                  toolInput: {},
-                  reasoning: ''
-                });
-              }
+                const step = await callTool(result.tool, this.tools, result.toolInput, result.reasoning);                
+                steps.push(step);
+              } 
             }
             
             console.log("Reached maximum iterations without final answer");
+
             return {
               output: "I wasn't able to reach a conclusion after multiple attempts. Please try asking your question differently.",
               intermediateSteps: steps,
