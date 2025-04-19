@@ -1,25 +1,38 @@
 {
   "name": "agent_backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.cjs",
-    "dev": "nodemon index.cjs",    
-    "debug": "nodemon --inspect-brk index.cjs",    
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "debug": "ts-node-dev --inspect-brk src/index.ts",
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "type-check": "tsc --noEmit"
   },
   "author": "",
   "license": "ISC",
   "description": "",
-  "dependencies": {        
+  "dependencies": {
     "@langchain/community": "^0.0.19",
     "@langchain/core": "^0.3.44",
+    "@langchain/mcp-adapters": "^0.4.2",
     "@langchain/openai": "^0.5.5",
     "@slack/bolt": "^4.2.1",
     "dotenv": "^16.5.0",
     "eventsource": "^3.0.6",
     "langchain": "^0.3.22",
     "node-fetch": "^3.3.2",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "ts-node-dev": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@typescript-eslint/eslint-plugin": "^7.3.1",
+    "@typescript-eslint/parser": "^7.3.1",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.2"
   }
 }
