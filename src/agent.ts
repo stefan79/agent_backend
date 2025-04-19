@@ -4,6 +4,7 @@ import { formatScratchpad } from "./scratchpad";
 import { callTool, generateToolGuidance } from "./tools";
 import { HumanMessage, SystemMessage, AIMessageChunk} from "@langchain/core/messages";
 import { ChatOpenAI } from "@langchain/openai";
+import * as hub from "langchain/hub/node";
 
 interface ToolAgentResponse {
     actionType: "tool";
@@ -18,54 +19,27 @@ interface FinalAnswerResponse {
     reasoning: string;
 }
 
-const generatePrompt = (userInput: string, tools: StructuredToolInterface[], steps: Step[]) => {
-    const scratchpad = formatScratchpad(steps);
+const generatePrompt = async (userInput: string, tools: StructuredToolInterface[], steps: Step[]) => {
+    const scratchPad = formatScratchpad(steps);
     const toolGuidance = generateToolGuidance(tools);
     
-    const systemContent = `You are an assistant that helps users by answering questions and completing tasks step by step. 
-    
-  
-  You have access to the following tools:
-  
-  ${toolGuidance}
-  
-  IMPORTANT: When using a tool, make sure your toolInput matches exactly what the tool expects.
-  
-  You must respond in one of these two formats EXACTLY:
-  
-  FORMAT 1 - To use a tool:
-  {
-    "actionType": "tool",
-    "tool": "name_of_the_tool_to_use",
-    "toolInput":<object with proper fields, e.g. {"field1": "value1", "field2": "value2"}>,
-    "reasoning": "why you are using this tool and why the previous steps are not helpful"
-  }
-  
-  FORMAT 2 - To give a final answer:
-  {
-    "actionType": "finalAnswer",
-    "answer": "your final answer to the user's question",
-    "reasoning": "why this is your answer"
-  }
-  
-  PREVIOUS STEPS:
-  ${scratchpad}
-  
-  IMPORTANT INSTRUCTIONS:
-  1. Review the previous steps carefully, especially the Results from tool executions.
-  2. If a tool returned a result, use that information to inform your next action.
-  3. If a tool returned an error, try using it differently or use a different tool.
-  4. If you have enough information from the previous steps to answer the user's question, provide a final answer.
-  5. If you are not sure how to proceed, use a tool to gather more information.
-  6. Try to deliver a final answer as fast as possible
-  
-  Think step-by-step, then respond with ONLY a JSON object matching one of the formats above.`;
-  
+    const request = await hub.pull("react_agent");
+    const hubPrompt = await request.invoke({
+      userInput
+    });
+
+    const systemMessageTemplate = hubPrompt.messages[0];
+    const userMessage = hubPrompt.messages[1];
+
+    const formattedSystemPrompt = systemMessageTemplate.content
+        .replace("{{scratchPad}}", scratchPad)
+        .replace("{{toolGuidance}}", toolGuidance);
+
     return [
-      new SystemMessage(systemContent),
-      new HumanMessage(userInput)
+        new SystemMessage(formattedSystemPrompt),
+        new HumanMessage(userMessage.content)
     ];
-  };
+}
 
 const parseModelResponse = (response: AIMessageChunk): ToolAgentResponse | FinalAnswerResponse => {
     try {
@@ -104,7 +78,7 @@ const parseModelResponse = (response: AIMessageChunk): ToolAgentResponse | Final
               console.log(`\nIteration ${iterations}`);
               
               // Generate messages for this iteration
-              const messages = generatePrompt(input, this.tools, steps);
+              const messages = await generatePrompt(input, this.tools, steps);
               
               // Get response from the model
               const response = await this.model.invoke(messages);
