@@ -46,8 +46,9 @@ export const callTool = async (toolName: string, tools: StructuredToolInterface[
         console.log(`Executing tool ${toolName} with input:`, toolInput);
 
         const toolResponse = await tool.invoke(toolInput);
+        console.log("Tool response:", toolResponse);
 
-        const observation = toolResponse.map((item: { text: string }) => item.text).join(', ')
+        ;const observation = toolResponse;
 
         console.log("Tool result:", observation);
 
