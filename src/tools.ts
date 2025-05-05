@@ -48,7 +48,7 @@ export const callTool = async (toolName: string, tools: StructuredToolInterface[
         const toolResponse = await tool.invoke(toolInput);
         console.log("Tool response:", toolResponse);
 
-        ;const observation = toolResponse;
+        const observation = toolResponse;
 
         console.log("Tool result:", observation);
 
