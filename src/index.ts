@@ -33,7 +33,7 @@ import { Agent } from './agent';
   });
 
   // Initialize the agent
-  const agent = new Agent(model, tools, 3);
+  const agent = new Agent(model, tools, 5);
 
   // Initialize Slack app
   const app = new App({
@@ -42,6 +42,20 @@ import { Agent } from './agent';
     appToken: process.env.SLACK_SOCKET_TOKEN,
     signingSecret: process.env.SLACK_SIGNING_SECRET,
   });
+
+  const wrapResponse = (response: string) => {
+    return {
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: response
+          }
+        }
+      ]
+    }
+  };
 
   // Handle Slack messages
   app.message(/^.*$/, async ({ message, say }) => {
@@ -55,7 +69,7 @@ import { Agent } from './agent';
       
       console.log("Agent result:", result);
       
-      await say(result.output);
+      await say(wrapResponse(result.output));
     } catch (error) {
       console.error("Error processing message:", error);
       await say(`Sorry, I encountered an error: ${(error as Error)?.message}`);
