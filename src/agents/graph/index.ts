@@ -1,7 +1,7 @@
 import { BaseMessage } from '@langchain/core/messages';
 import { buildSequence, buildRunnableConfig } from '../index';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { ReviewResultSchema, reviewCallback, review } from './nodex';
+import { ReviewResultSchema, reviewCallback, review } from './nodes/review';
 
 //Taken from the Simple React Agent
 export interface ToolInput {

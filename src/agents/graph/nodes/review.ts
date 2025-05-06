@@ -1,4 +1,4 @@
-import { AgentState } from './index';
+import { AgentState } from '../index';
 import { AIMessage, BaseMessage } from '@langchain/core/messages';
 import { RunnableConfig, RunnableSequence } from "@langchain/core/runnables";
 import { z } from "zod";
