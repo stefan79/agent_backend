@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { ChatOpenAI } from "@langchain/openai";
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import { App } from '@slack/bolt';
-import { Agent } from './agent';
+import { SimpleReactAgent } from './agents/simple';
 
 // Start the app
 (async () => {
@@ -33,7 +33,7 @@ import { Agent } from './agent';
   });
 
   // Initialize the agent
-  const agent = new Agent(model, tools, 5);
+  const agent = new SimpleReactAgent(model, tools, 5);
 
   // Initialize Slack app
   const app = new App({

@@ -5,6 +5,7 @@ import { callTool, generateToolGuidance } from "./tools";
 import { HumanMessage, SystemMessage, AIMessageChunk} from "@langchain/core/messages";
 import { ChatOpenAI } from "@langchain/openai";
 import * as hub from "langchain/hub/node";
+import {Agent} from "../index";
 
 interface ToolAgentResponse {
     actionType: "tool";
@@ -59,7 +60,11 @@ const parseModelResponse = (response: AIMessageChunk): ToolAgentResponse | Final
       throw error;
     }
   }
-  export class Agent {
+
+  
+
+
+export class SimpleReactAgent implements Agent {
     private model: ChatOpenAI;
     private tools: StructuredToolInterface[];
     private maxIterations: number;
@@ -111,4 +116,4 @@ const parseModelResponse = (response: AIMessageChunk): ToolAgentResponse | Final
           }      
     }
   
-  export default Agent;
+  export default SimpleReactAgent;
