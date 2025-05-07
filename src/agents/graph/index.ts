@@ -2,6 +2,7 @@ import { BaseMessage } from '@langchain/core/messages';
 import { buildSequence, buildRunnableConfig } from '../index';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ReviewResultSchema, reviewCallback, review } from './nodes/review';
+import { answerCallback, answer } from './nodes/answer';
 
 //Taken from the Simple React Agent
 export interface ToolInput {
@@ -25,7 +26,11 @@ export interface AgentState {
 export async function buildGraph(model: BaseChatModel) {
   const state: AgentState = {}
   const reviewSequence = await buildSequence("react_graph_review", model)(ReviewResultSchema, reviewCallback(state))
-  const config = buildRunnableConfig({project: "react_graph", id: "react_graph_review_node", name: "React Graph Review Node", version: "1.0.0"})
-  const reviewNode = review(reviewSequence, config)
+  const reviewConfig = buildRunnableConfig({project: "react_graph", id: "react_graph_review_node", name: "React Graph Review Node", version: "1.0.0"})
+  const reviewNode = review(reviewSequence, reviewConfig)
+
+  const answerSequence = await buildSequence("react_graph_answer", model)(undefined, answerCallback(state))
+  const answerConfig = buildRunnableConfig({project: "react_graph", id: "react_graph_answer_node", name: "React Graph Answer Node", version: "1.0.0"})
+  const answerNode = answer(answerSequence, answerConfig)
 }
   

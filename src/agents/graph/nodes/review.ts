@@ -37,7 +37,6 @@ export const review = (chain: RunnableSequence, config: RunnableConfig) => async
 
       const response: ReviewResult = await chain.invoke({}, config)
 
-
       const reviewText = JSON.stringify(response, null, 2);
       if(response.score <= 7){
 
