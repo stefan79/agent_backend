@@ -4,6 +4,31 @@ import { ChatOpenAI } from "@langchain/openai";
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import { App } from '@slack/bolt';
 import { SimpleReactAgent } from './agents/simple';
+import { AgentState, createAgent } from './agents/graph/ng';
+import { StructuredToolInterface } from "@langchain/core/tools";
+
+
+
+const callAgent = async (graph: any, input: string, tools: StructuredToolInterface[]) => {
+     // Initialize state with the question
+     const initialState: AgentState = {
+       task: input,
+       tools: tools,
+       history: [
+         {
+             node: "start",
+             type: "request",
+             data: input
+         }
+       ],
+       score: 0,
+       toolingComplete: false,
+       exhausted: false,
+     }; 
+
+     return graph.invoke(initialState)
+}
+    
 
 // Start the app
 (async () => {
@@ -33,6 +58,8 @@ import { SimpleReactAgent } from './agents/simple';
   });
 
   // Initialize the agent
+  const graph = await createAgent(model, tools);
+  
   const agent = new SimpleReactAgent(model, tools, 5);
 
   // Initialize Slack app
