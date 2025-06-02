@@ -26,8 +26,8 @@ export interface ReviewNodeOutput {
 export const reviewCallback = (state: AgentState) => (messages: BaseMessage[]) => {
   const history = state.history || [];
   messages.push(...history);
-  if(state.answer) {
-    messages.push(new AIMessage(state.answer));
+  if(state.suggestedAnswer) {
+    messages.push(new AIMessage(state.suggestedAnswer));
   }
 };
   
@@ -51,7 +51,7 @@ export const review = (chain: RunnableSequence, config: RunnableConfig) => async
       } else {
         return {
           next: "end",
-          finalAnswer: state.answer,
+          finalAnswer: state.suggestedAnswer,
           review: reviewText,
         }
       }
@@ -60,7 +60,7 @@ export const review = (chain: RunnableSequence, config: RunnableConfig) => async
       console.error("Error in review node:", error);
       return {
         next: "end",
-        finalAnswer: state.answer,
+        finalAnswer: state.suggestedAnswer,
         review: `Error during review: ${(error as Error).message}`,
       };
     }

@@ -16,17 +16,18 @@ export type messageCallback = (messages: BaseMessage[]) => void;
 
 
 
-//TODO: Cach the loadedd prompts somehow so we dont load them for each request. Also apply to the LLM tools.
+//TODO: Cach the loaded prompts somehow so we dont load them for each request. Also apply to the LLM tools.
 export const buildSequence =  (promptName: string, model: BaseChatModel) => async (schema?: ZodSchema, callback?: messageCallback): Promise<RunnableSequence> => {
     const basePrompt = await hub.pull(promptName);
-    const messages = await basePrompt.invoke({});
+    const processedPrompt = await basePrompt.invoke({});
+
     if(callback) {
-        callback(messages);
+        callback(processedPrompt.messages);
     }
     if (schema) {
-        return RunnableSequence.from([messages, model.withStructuredOutput(schema), new JsonOutputParser()]);
+        return RunnableSequence.from([processedPrompt, model.withStructuredOutput(schema), new JsonOutputParser()]);
     } else {
-        return RunnableSequence.from([messages, model, new StringOutputParser()]);
+        return RunnableSequence.from([processedPrompt, model, new StringOutputParser()]);
     }
 }
 
