@@ -52,10 +52,9 @@ const callAgent = async (graph: any, input: string, tools: StructuredToolInterfa
 
   // Initialize the language model
   const model = new ChatOpenAI({
-    modelName: "gpt-4",
+    modelName: "gpt-4o",
     openAIApiKey: process.env.OPENAI_API_KEY,
     temperature: 0,
-    maxTokens: 20000
     // Removed unsupported response_format parameter
   });
 
@@ -77,7 +76,6 @@ const callAgent = async (graph: any, input: string, tools: StructuredToolInterfa
   // Initialize the agent
   const graph = await createAgent(model, tools);
   
-  const agent = new SimpleReactAgent(model, tools, 5);
 
   // Initialize Slack app
   const app = new App({
@@ -107,13 +105,20 @@ const callAgent = async (graph: any, input: string, tools: StructuredToolInterfa
 
       const typedMessage = message as { text: string; user: string; channel: string };
 
+      const initialState: AgentState = {
+        task: typedMessage.text,
+        tools: tools,
+        history: []
+      };
+      
+
       console.log("Processing message:", typedMessage.text);
       
-      const result = await agent.run(typedMessage.text);
-      
+      const state = await graph.invoke(initialState);
+      const result = state.agentResponse ?? state.error ?? "No result";
       console.log("Agent result:", result);
       
-      await say(wrapResponse(result.output));
+      await say(wrapResponse(result));
     } catch (error) {
       console.error("Error processing message:", error);
       await say(`Sorry, I encountered an error: ${(error as Error)?.message}`);

@@ -42,11 +42,11 @@ export async function taskAnswerNode(state: AgentState, model: BaseChatModel): P
     });
 
     //TODO This neeeds to be fixed
-    if (response.error && response.error !== "null") {
+    if (!response.answer) {
         history.push({
             node: "answer",
             type: "error",
-            data: response.error
+            data: response.error ?? ""
         })
         return {
             error: response.error,
