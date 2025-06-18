@@ -4,7 +4,9 @@ import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { z } from "zod";
 import { StructuredToolInterface } from "@langchain/core/tools";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { loadPrompt } from "./util";
+import { getCallbacks, loadPrompt } from "./util";
+import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
+
 
 
 const AnswerSchema = z.object({
@@ -25,7 +27,7 @@ export async function taskAnswerNode(state: AgentState, model: BaseChatModel): P
     const basePrompt = await loadPrompt("react_graph_task_answer");
     const structuredModel = model.withStructuredOutput(AnswerSchema)
     const pipeline = basePrompt.pipe(structuredModel)
-    const history = state.history;
+    const history: HistoricEvent[] = [];
 
     history.push({
         node: "answer",

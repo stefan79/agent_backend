@@ -29,6 +29,8 @@
     "dotenv": "^16.5.0",
     "eventsource": "^3.0.6",
     "langchain": "^0.3.22",
+    "langfuse": "^3.37.4",
+    "langfuse-langchain": "^3.37.4",
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.9",
     "ts-node-dev": "^2.0.0"

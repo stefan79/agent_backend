@@ -17,7 +17,7 @@ type AnswerResponse = z.infer<typeof AnswerSchema>
 const mapHistory = (history: HistoricEvent[]) => history.map((message) => `${message.node} - ${message.type}: ${message.data}`).join("\n");
 const mapFormat = (schema: z.ZodType<any>) => zodToJsonSchema(schema)
 
-export async function taskFinalizerNode(state: AgentState, model: BaseChatModel): Promise<Partial<AgentState>>{
+export async function taskFinalizerNode(state: AgentState): Promise<Partial<AgentState>>{
 
     return {
         agentResponse: state.suggestedAnswer

@@ -5,6 +5,8 @@ import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import { BaseMessage, HumanMessage } from "@langchain/core/messages";
 import { StructuredToolInterface } from "@langchain/core/tools";
 import { AgentState, createAgent } from './agents/graph/ng';
+import CallbackHandler from 'langfuse-langchain';
+import { getCallbacks, startSpan } from './agents/graph/ng/util';
 
 // Main debugging function
 async function main() {
@@ -60,10 +62,11 @@ async function main() {
     // Initialize the language model
     console.log("Initializing OpenAI model...");
     const model = new ChatOpenAI({
-      modelName: "gpt-4",
+      modelName: "gpt-4o",
       openAIApiKey: process.env.OPENAI_API_KEY,
-      temperature: 0
+      temperature: 0,
     });
+
 
     // Build the graph
     console.log("Building the agent graph...");
@@ -88,7 +91,9 @@ async function main() {
     
     // Execute the graph
     console.log("Executing graph...");
-    const result = await graph.invoke(initialState);
+    const result = await graph.invoke(initialState, {
+      callbacks: getCallbacks(initialState),
+    });
     
     // Display the result
     console.log("\n--- EXECUTION RESULT ---");

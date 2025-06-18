@@ -4,7 +4,8 @@ import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { z } from "zod";
 import { StructuredToolInterface } from "@langchain/core/tools";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { loadPrompt } from "./util";
+import { getCallbacks, loadPrompt } from "./util";
+import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
 
 const ReviewSchema = z.object({
     error: z.string().optional().describe("An error message if something went wrong"),
@@ -24,7 +25,7 @@ export async function taskReviewNode(state: AgentState, model: BaseChatModel): P
     const basePrompt = await loadPrompt("react_graph_task_review");
     const structuredModel = model.withStructuredOutput(ReviewSchema)
     const pipeline = basePrompt.pipe(structuredModel)
-    const history = state.history;
+    const history: HistoricEvent[] = [];
 
     console.log("taskReviewNode ", state.suggestedAnswer)
 

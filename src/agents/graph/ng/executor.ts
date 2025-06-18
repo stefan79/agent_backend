@@ -4,7 +4,8 @@ import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { z } from "zod";
 import { StructuredToolInterface } from "@langchain/core/tools";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { loadPrompt } from "./util";
+import { getCallbacks, loadPrompt } from "./util";
+import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
 
 const ExecutorSchema = z.object({
     error: z.string().optional().describe("An error message if something went wrong"),
@@ -24,7 +25,7 @@ const mapFormat = (schema: z.ZodType<any>) => zodToJsonSchema(schema)
 
 export async function taskExecutorNode(state: AgentState, model: BaseChatModel): Promise<Partial<AgentState>>{
     console.log("taskExecutorNode ", state.tool)
-    const history = state.history;
+    const history: HistoricEvent[] = [];
 
     history.push({
         node: "tool",

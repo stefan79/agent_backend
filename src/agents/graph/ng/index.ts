@@ -7,6 +7,9 @@ import { taskExecutorNode } from './executor';
 import { taskReviewNode } from './review';
 import { taskAnswerNode } from './answer';
 import { taskFinalizerNode } from './finalizer';
+import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
+import { Langfuse, LangfuseSpanClient } from "langfuse";
+import { startSpan } from './util';
 
 export interface AgentState {
     task: string;
@@ -84,6 +87,11 @@ export function createAgent(model: BaseChatModel, tools: StructuredToolInterface
             default: () => 0,
             reducer: (x: number, y: number) => y,
         },
+        exhausted: {
+            value: (x: boolean) => x,
+            default: () => false,
+            reducer: (x: boolean, y: boolean) => y,
+        }
     }
 
     //TODO Remove model from nodes when not required
@@ -92,7 +100,7 @@ export function createAgent(model: BaseChatModel, tools: StructuredToolInterface
         .addNode("executor", async (state: AgentState) => taskExecutorNode(state, model))
         .addNode("review", async (state: AgentState) => taskReviewNode(state, model))
         .addNode("answer", async (state: AgentState) => taskAnswerNode(state, model))
-        .addNode("finalizer", async (state: AgentState) => taskFinalizerNode(state, model))
+        .addNode("finalizer", async (state: AgentState) => taskFinalizerNode(state))
         .addEdge("__start__", "analyze")
         .addEdge("executor", "analyze")
         .addConditionalEdges(

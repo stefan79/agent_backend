@@ -6,6 +6,7 @@ import { App } from '@slack/bolt';
 import { SimpleReactAgent } from './agents/simple';
 import { AgentState, createAgent } from './agents/graph/ng';
 import { StructuredToolInterface } from "@langchain/core/tools";
+import { CallbackHandler } from "langfuse-langchain";
 
 
 
@@ -53,9 +54,25 @@ const callAgent = async (graph: any, input: string, tools: StructuredToolInterfa
   const model = new ChatOpenAI({
     modelName: "gpt-4",
     openAIApiKey: process.env.OPENAI_API_KEY,
-    temperature: 0
+    temperature: 0,
+    maxTokens: 20000
     // Removed unsupported response_format parameter
   });
+
+  const cbs: CallbackHandler[] = [];
+  if (process.env.LANGFUSE_TRACING === "true") {
+    console.log("LANGFUSE_TRACING is true");
+    const cb = new CallbackHandler({
+      secretKey: process.env.LANGFUSE_API_KEY,
+      publicKey: process.env.LANGFUSE_PUBLIC_API_KEY,
+      baseUrl: process.env.LANGFUSE_HOST,
+    });
+    cbs.push(cb);
+  } else {
+    console.log("LANGFUSE_TRACING is false");
+  }
+
+
 
   // Initialize the agent
   const graph = await createAgent(model, tools);
