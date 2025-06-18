@@ -3,7 +3,33 @@ import 'dotenv/config';
 import { ChatOpenAI } from "@langchain/openai";
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import { App } from '@slack/bolt';
-import { Agent } from './agent';
+import { SimpleReactAgent } from './agents/simple';
+import { AgentState, createAgent } from './agents/graph/ng';
+import { StructuredToolInterface } from "@langchain/core/tools";
+import { CallbackHandler } from "langfuse-langchain";
+
+
+
+const callAgent = async (graph: any, input: string, tools: StructuredToolInterface[]) => {
+     // Initialize state with the question
+     const initialState: AgentState = {
+       task: input,
+       tools: tools,
+       history: [
+         {
+             node: "start",
+             type: "request",
+             data: input
+         }
+       ],
+       score: 0,
+       toolingComplete: false,
+       exhausted: false,
+     }; 
+
+     return graph.invoke(initialState)
+}
+    
 
 // Start the app
 (async () => {
@@ -26,14 +52,30 @@ import { Agent } from './agent';
 
   // Initialize the language model
   const model = new ChatOpenAI({
-    modelName: "gpt-4",
+    modelName: "gpt-4o",
     openAIApiKey: process.env.OPENAI_API_KEY,
-    temperature: 0
+    temperature: 0,
     // Removed unsupported response_format parameter
   });
 
+  const cbs: CallbackHandler[] = [];
+  if (process.env.LANGFUSE_TRACING === "true") {
+    console.log("LANGFUSE_TRACING is true");
+    const cb = new CallbackHandler({
+      secretKey: process.env.LANGFUSE_API_KEY,
+      publicKey: process.env.LANGFUSE_PUBLIC_API_KEY,
+      baseUrl: process.env.LANGFUSE_HOST,
+    });
+    cbs.push(cb);
+  } else {
+    console.log("LANGFUSE_TRACING is false");
+  }
+
+
+
   // Initialize the agent
-  const agent = new Agent(model, tools, 5);
+  const graph = await createAgent(model, tools);
+  
 
   // Initialize Slack app
   const app = new App({
@@ -63,13 +105,20 @@ import { Agent } from './agent';
 
       const typedMessage = message as { text: string; user: string; channel: string };
 
+      const initialState: AgentState = {
+        task: typedMessage.text,
+        tools: tools,
+        history: []
+      };
+      
+
       console.log("Processing message:", typedMessage.text);
       
-      const result = await agent.run(typedMessage.text);
-      
+      const state = await graph.invoke(initialState);
+      const result = state.agentResponse ?? state.error ?? "No result";
       console.log("Agent result:", result);
       
-      await say(wrapResponse(result.output));
+      await say(wrapResponse(result));
     } catch (error) {
       console.error("Error processing message:", error);
       await say(`Sorry, I encountered an error: ${(error as Error)?.message}`);
