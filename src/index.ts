@@ -3,10 +3,10 @@ import 'dotenv/config';
 import { ChatOpenAI } from "@langchain/openai";
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import { App } from '@slack/bolt';
-import { SimpleReactAgent } from './agents/simple';
 import { AgentState, createAgent } from './agents/graph/ng';
 import { StructuredToolInterface } from "@langchain/core/tools";
 import { CallbackHandler } from "langfuse-langchain";
+import OpenAICompatibleServer from './langgraph_openai_server';
 
 
 
@@ -105,10 +105,10 @@ const callAgent = async (graph: any, input: string, tools: StructuredToolInterfa
 
       const typedMessage = message as { text: string; user: string; channel: string };
 
-      const initialState: AgentState = {
+      const initialState: Partial<AgentState> = {
         task: typedMessage.text,
         tools: tools,
-        history: []
+        history: [],
       };
       
 
@@ -128,4 +128,13 @@ const callAgent = async (graph: any, input: string, tools: StructuredToolInterfa
   // Start the Slack app
   await app.start(process.env.PORT || 3005);
   console.log('Slack bot is running!');
+
+  // Start the OpenAI-compatible server on a different port
+  const openaiServer = new OpenAICompatibleServer(model, tools);
+  const openaiPort = Number.parseInt(process.env.OPENAI_PORT ?? '3004', 10);
+  await openaiServer.start(openaiPort);
+
+  console.log('🎉 Both servers are running:');
+  console.log(`📱 Slack Bot: Port ${process.env.PORT || 3005}`);
+  console.log(`🤖 OpenAI API: Port ${openaiPort}`);
 })();

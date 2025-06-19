@@ -24,6 +24,7 @@ Create a `.env` file in the root directory with the following variables:
 
 ```env
 PORT=3000
+OPENAI_PORT=3004
 SLACK_SIGNING_SECRET=your_signing_secret
 SLACK_BOT_TOKEN=xoxb-your-bot-token
 SLACK_CLIENT_ID=your_client_id
