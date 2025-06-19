@@ -3,10 +3,10 @@ import 'dotenv/config';
 import { ChatOpenAI } from "@langchain/openai";
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import { App } from '@slack/bolt';
-import { SimpleReactAgent } from './agents/simple';
 import { AgentState, createAgent } from './agents/graph/ng';
 import { StructuredToolInterface } from "@langchain/core/tools";
 import { CallbackHandler } from "langfuse-langchain";
+import OpenAICompatibleServer from './langgraph_openai_server';
 
 
 
