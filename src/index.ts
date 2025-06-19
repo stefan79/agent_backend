@@ -105,10 +105,10 @@ const callAgent = async (graph: any, input: string, tools: StructuredToolInterfa
 
       const typedMessage = message as { text: string; user: string; channel: string };
 
-      const initialState: AgentState = {
+      const initialState: Partial<AgentState> = {
         task: typedMessage.text,
         tools: tools,
-        history: []
+        history: [],
       };
       
 
@@ -128,4 +128,13 @@ const callAgent = async (graph: any, input: string, tools: StructuredToolInterfa
   // Start the Slack app
   await app.start(process.env.PORT || 3005);
   console.log('Slack bot is running!');
+
+  // Start the OpenAI-compatible server on a different port
+  const openaiServer = new OpenAICompatibleServer(model, tools);
+  const openaiPort = 3004;
+  await openaiServer.start(openaiPort);
+
+  console.log('🎉 Both servers are running:');
+  console.log(`📱 Slack Bot: Port ${process.env.PORT || 3005}`);
+  console.log(`🤖 OpenAI API: Port ${openaiPort}`);
 })();
