@@ -131,7 +131,7 @@ const callAgent = async (graph: any, input: string, tools: StructuredToolInterfa
 
   // Start the OpenAI-compatible server on a different port
   const openaiServer = new OpenAICompatibleServer(model, tools);
-  const openaiPort = 3004;
+  const openaiPort = Number.parseInt(process.env.OPENAI_PORT ?? '3004', 10);
   await openaiServer.start(openaiPort);
 
   console.log('🎉 Both servers are running:');
