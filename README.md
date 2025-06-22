@@ -1,11 +1,10 @@
 # Agent Backend
 
-A Slack bot integration that connects with a custom React agent and uses an MCP (Model Control Protocol) server for tool loading and execution.
+Offern an Open AI compatible back-end to and host a multi agentic graph.
 
 ## Project Overview
 
-This project implements a Slack bot that:
-- Integrates with Slack using the Bolt framework
+This project implements an Open AI API that:
 - Communicates with a custom React agent
 - Utilizes an MCP server for dynamic tool loading and execution
 - Built with TypeScript for type safety and better development experience
@@ -14,7 +13,6 @@ This project implements a Slack bot that:
 
 - Node.js (Latest LTS version recommended)
 - npm/yarn
-- Slack App credentials
 - OpenAI API key
 - MCP server access
 
@@ -25,11 +23,6 @@ Create a `.env` file in the root directory with the following variables:
 ```env
 PORT=3000
 OPENAI_PORT=3004
-SLACK_SIGNING_SECRET=your_signing_secret
-SLACK_BOT_TOKEN=xoxb-your-bot-token
-SLACK_CLIENT_ID=your_client_id
-SLACK_CLIENT_SECRET=your_client_secret
-SLACK_SOCKET_TOKEN=your_socket_token
 OPENAI_API_KEY=your_openai_api_key
 ```
 
@@ -57,7 +50,6 @@ npm install
 ## Dependencies
 
 ### Main Dependencies
-- `@slack/bolt`: Slack app framework
 - `@langchain/core`, `@langchain/community`, `@langchain/openai`: LangChain integration
 - `@langchain/mcp-adapters`: MCP server integration
 - `dotenv`: Environment variable management
