@@ -2,34 +2,10 @@
 import 'dotenv/config';
 import { ChatOpenAI } from "@langchain/openai";
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
-import { App } from '@slack/bolt';
-import { SimpleReactAgent } from './agents/simple';
-import { AgentState, createAgent } from './agents/graph/ng';
-import { StructuredToolInterface } from "@langchain/core/tools";
+import {  createAgent } from './agents/graph/ng';
 import { CallbackHandler } from "langfuse-langchain";
+import OpenAICompatibleServer from './langgraph_openai_server';
 
-
-
-const callAgent = async (graph: any, input: string, tools: StructuredToolInterface[]) => {
-     // Initialize state with the question
-     const initialState: AgentState = {
-       task: input,
-       tools: tools,
-       history: [
-         {
-             node: "start",
-             type: "request",
-             data: input
-         }
-       ],
-       score: 0,
-       toolingComplete: false,
-       exhausted: false,
-     }; 
-
-     return graph.invoke(initialState)
-}
-    
 
 // Start the app
 (async () => {
@@ -70,62 +46,12 @@ const callAgent = async (graph: any, input: string, tools: StructuredToolInterfa
   } else {
     console.log("LANGFUSE_TRACING is false");
   }
-
-
-
-  // Initialize the agent
-  const graph = await createAgent(model, tools);
   
+  // Start the OpenAI-compatible server on a different port
+  const openaiServer = new OpenAICompatibleServer(model, tools);
+  const openaiPort = Number.parseInt(process.env.OPENAI_PORT ?? '3004', 10);
+  await openaiServer.start(openaiPort);
 
-  // Initialize Slack app
-  const app = new App({
-    token: process.env.SLACK_BOT_TOKEN,
-    socketMode: true,
-    appToken: process.env.SLACK_SOCKET_TOKEN,
-    signingSecret: process.env.SLACK_SIGNING_SECRET,
-  });
-
-  const wrapResponse = (response: string) => {
-    return {
-      blocks: [
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: response
-          }
-        }
-      ]
-    }
-  };
-
-  // Handle Slack messages
-  app.message(/^.*$/, async ({ message, say }) => {
-    try {
-
-      const typedMessage = message as { text: string; user: string; channel: string };
-
-      const initialState: AgentState = {
-        task: typedMessage.text,
-        tools: tools,
-        history: []
-      };
-      
-
-      console.log("Processing message:", typedMessage.text);
-      
-      const state = await graph.invoke(initialState);
-      const result = state.agentResponse ?? state.error ?? "No result";
-      console.log("Agent result:", result);
-      
-      await say(wrapResponse(result));
-    } catch (error) {
-      console.error("Error processing message:", error);
-      await say(`Sorry, I encountered an error: ${(error as Error)?.message}`);
-    }
-  });
-
-  // Start the Slack app
-  await app.start(process.env.PORT || 3005);
-  console.log('Slack bot is running!');
+  console.log('🎉 Open AI Server is running:');
+  console.log(`🤖 OpenAI API: Port ${openaiPort}`);
 })();
